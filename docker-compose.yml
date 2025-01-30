@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16.3
+    container_name: golang-backend
+    environment:
+      POSTGRES_USER: sanjeev
+      POSTGRES_PASSWORD: sanjeev
+      POSTGRES_DB: social
+    volumes:
+      - golang-data:/var/lib/postgresql/data
+    ports:
+      - "11432:5432"
+
+volumes:
+   golang-data:
