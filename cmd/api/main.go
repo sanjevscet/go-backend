@@ -25,6 +25,8 @@ func main() {
 		maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 	}
 
+	log.Printf("DB_ADDR: %s", dbConfig.addr)
+
 	cfg := config{
 		addr: env.GetString("ADDR", ":1414"),
 		env:  env.GetString("ENV", "development"),
