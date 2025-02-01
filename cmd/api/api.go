@@ -45,6 +45,19 @@ func (app *application) mount() http.Handler {
 				r.Delete("/", app.deletePostHandler)
 			})
 		})
+
+		r.Route("/users", func(r chi.Router) {
+
+			// r.Get("/", app.listPostsHandler)
+			r.Post("/", app.createUserHandler)
+			r.Route("/{userId}", func(r chi.Router) {
+				r.Use(app.userContextMiddleware)
+				r.Get("/", app.getUserHandler)
+				// r.Patch("/", app.updatePostHandler)
+				// r.Delete("/", app.deletePostHandler)
+			})
+		})
+
 	})
 	return r
 }
