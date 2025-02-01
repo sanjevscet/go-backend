@@ -9,6 +9,8 @@ import (
 	"github.com/sanjevscet/go-backend.git/internal/store"
 )
 
+const API_VERSION = "0.0.1"
+
 func main() {
 
 	// Load .envrc file
@@ -16,21 +18,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading .envrc file")
 	}
+	dbConfig := dbConfig{
+		addr:         env.GetString("DB_ADDR", "postgres://sanjeev:sanjeev@localhost:11432/social?sslmode=disable"),
+		maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
+		maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 10),
+		maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
+	}
+
 	cfg := config{
 		addr: env.GetString("ADDR", ":1414"),
-		db: dbConfig{
-			addr:         env.GetString("DB_ADDR", "postgres://sanjeev:sanjeev@localhost:11432/social?sslmode=disable"),
-			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
-			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 10),
-			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
-		},
+		env:  env.GetString("ENV", "development"),
+		db:   dbConfig,
 	}
 
 	database, err := db.New(
-		cfg.db.addr,
-		cfg.db.maxOpenConns,
-		cfg.db.maxIdleConns,
-		cfg.db.maxIdleTime)
+		dbConfig.addr,
+		dbConfig.maxOpenConns,
+		dbConfig.maxIdleConns,
+		dbConfig.maxIdleTime)
 	if err != nil {
 		log.Panic()
 	}
