@@ -18,6 +18,10 @@ type createUserPayload struct {
 	Password string `json:"password" validate:"required,min=3,max=40"`
 }
 
+type FollowerUser struct {
+	UserID int64 `json:"user_id"`
+}
+
 func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload createUserPayload
 
@@ -54,6 +58,64 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
+	followerUser := getUserFromContext(r.Context())
+
+	// TODO: revert back to auth user id once auth is implemented
+	var payload FollowerUser
+	if err := readJson(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	ctx := r.Context()
+
+	if err := app.store.Followers.Follow(ctx, followerUser.ID, payload.UserID); err != nil {
+		switch {
+		case errors.Is(err, store.ForeignKeyViolated):
+		case errors.Is(err, store.CheckConstraintViolated):
+		case errors.Is(err, store.UniqueKeyConstraintViolated):
+			app.conflictResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusNoContent, nil); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+}
+
+func (app *application) UnFollowUserHandler(w http.ResponseWriter, r *http.Request) {
+	unFollowerUser := getUserFromContext(r.Context())
+
+	// TODO: revert back to auth user id once auth is implemented
+	var payload FollowerUser
+	if err := readJson(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	ctx := r.Context()
+
+	if err := app.store.Followers.UnFollow(ctx, unFollowerUser.ID, payload.UserID); err != nil {
+		switch {
+		case errors.Is(err, store.ForeignKeyViolated):
+		case errors.Is(err, store.CheckConstraintViolated):
+		case errors.Is(err, store.UniqueKeyConstraintViolated):
+			app.conflictResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusNoContent, nil); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+}
+
 func (app *application) userContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "userId")
@@ -78,4 +140,8 @@ func (app *application) userContextMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, userKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func getUserFromContext(ctx context.Context) *store.User {
+	return ctx.Value(userKey).(*store.User)
 }

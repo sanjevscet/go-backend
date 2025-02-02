@@ -8,8 +8,11 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("Resource not found")
-	QueryTimeOutDuration = time.Second * 5
+	ErrNotFound                 = errors.New("Resource not found")
+	QueryTimeOutDuration        = time.Second * 5
+	ForeignKeyViolated          = errors.New("Referenced key not found")
+	CheckConstraintViolated     = errors.New("Check constraint violated")
+	UniqueKeyConstraintViolated = errors.New("Unique key constraint violated")
 )
 
 type Storage struct {
@@ -27,12 +30,17 @@ type Storage struct {
 		GetByPostId(context.Context, int64) ([]Comment, error)
 		Create(context.Context, *Comment) error
 	}
+	Followers interface {
+		Follow(context.Context, int64, int64) error
+		UnFollow(context.Context, int64, int64) error
+	}
 }
 
 func NewStorage(db *sql.DB) Storage {
 	return Storage{
-		Posts:    &PostStore{db},
-		Users:    &UserStore{db},
-		Comments: &CommentStore{db},
+		Posts:     &PostStore{db},
+		Users:     &UserStore{db},
+		Comments:  &CommentStore{db},
+		Followers: &FollowerStore{db},
 	}
 }
