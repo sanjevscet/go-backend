@@ -22,34 +22,34 @@ type FollowerUser struct {
 	UserID int64 `json:"user_id"`
 }
 
-func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
-	var payload createUserPayload
+// func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
+// 	var payload createUserPayload
 
-	if err := readJson(w, r, &payload); err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
+// 	if err := readJson(w, r, &payload); err != nil {
+// 		app.badRequestResponse(w, r, err)
+// 		return
+// 	}
 
-	if err := Validate.Struct(payload); err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
+// 	if err := Validate.Struct(payload); err != nil {
+// 		app.badRequestResponse(w, r, err)
+// 		return
+// 	}
 
-	user := &store.User{
-		Username: payload.Username,
-		Email:    payload.Email,
-		Password: payload.Password,
-	}
+// 	user := &store.User{
+// 		Username: payload.Username,
+// 		Email:    payload.Email,
+// 		Password: payload.Password,
+// 	}
 
-	if err := app.store.Users.Create(context.Background(), user); err != nil {
-		app.internalServerError(w, r, err)
-		return
-	}
-	if err := app.jsonResponse(w, http.StatusCreated, user); err != nil {
-		app.internalServerError(w, r, err)
-		return
-	}
-}
+// 	if err := app.store.Users.Create(context.Background(), user); err != nil {
+// 		app.internalServerError(w, r, err)
+// 		return
+// 	}
+// 	if err := app.jsonResponse(w, http.StatusCreated, user); err != nil {
+// 		app.internalServerError(w, r, err)
+// 		return
+// 	}
+// }
 
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(userKey).(*store.User)
@@ -140,6 +140,25 @@ func (app *application) userContextMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, userKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	if err := app.store.Users.Activate(r.Context(), token); err != nil {
+
+		switch err {
+		case store.ErrNotFound:
+			app.notFoundResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusNoContent, ""); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
 }
 
 func getUserFromContext(ctx context.Context) *store.User {

@@ -16,3 +16,15 @@ migrate create -seq -ext sql -dir ./cmd/migrate/migrations create_posts
 
 migrate -path ./cmd/migrate/migrations -database "postgres://sanjeev:sanjeev@localhost:11432/social?sslmode=disable" up  
 migrate -path ./cmd/migrate/migrations -database "postgres://sanjeev:sanjeev@localhost:11432/social?sslmode=disable" down
+
+### Create migration
+
+make migration add_invitation
+
+### Run migration
+
+make migrate-up
+
+### DOWN migration
+
+make migrate-down

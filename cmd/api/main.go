@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sanjevscet/go-backend.git/internal/db"
@@ -31,6 +32,9 @@ func main() {
 		addr: env.GetString("ADDR", ":1414"),
 		env:  env.GetString("ENV", "development"),
 		db:   dbConfig,
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3,
+		},
 	}
 
 	database, err := db.New(
